@@ -1,11 +1,13 @@
 import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
-import { Card } from './card/card';
+// Import custom components
+import { Sidebar } from './layout/sidebar/sidebar';
+import { Topbar } from './layout/topbar/topbar';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, Card],
+  imports: [RouterOutlet, Sidebar, Topbar],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
