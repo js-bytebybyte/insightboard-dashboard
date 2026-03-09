@@ -1,6 +1,11 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgApexchartsModule } from 'ng-apexcharts';
+
+// primeng module imports
+import { CardModule } from 'primeng/card';
+
+
 import {
   ApexAxisChartSeries,
   ApexChart,

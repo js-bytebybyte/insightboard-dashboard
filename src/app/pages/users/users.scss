@@ -1,0 +1,16 @@
+.p-datatable {
+
+    ::ng-deep {
+        --p-datatable-header-cell-background: none !important;
+        --p-datatable-row-background: none !important;
+        --p-datatable-border-color: red;
+        --p-datatable-row-hover-background: none !important;
+    }
+}
+
+.p-checkbox {
+    ::ng-deep {
+    
+        --p-checkbox-background: none !important;
+    }
+}

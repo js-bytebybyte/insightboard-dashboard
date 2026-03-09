@@ -1,1 +1,209 @@
-<p>users works!</p>
+<div class="space-y-6">
+  <!-- Page Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-3xl font-bold text-blue-gray-900 dark:text-white">Users</h1>
+      <p class="text-sm text-blue-gray-500 dark:text-blue-gray-400 mt-1">Manage your team members and their roles</p>
+    </div>
+    <button class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg hover:from-purple-600 hover:to-pink-600 transition-colors shadow-md">
+      <i class="pi pi-plus mr-2"></i>
+      Add User
+    </button>
+  </div>
+
+  <!-- Users Table Card -->
+  <div class="bg-white dark:bg-blue-gray-800 rounded-xl shadow-sm border border-blue-gray-100 dark:border-blue-gray-700 overflow-hidden">
+    
+    <!-- Table Toolbar -->
+    <div class="p-6 border-b border-blue-gray-100 dark:border-blue-gray-700">
+      <div class="flex flex-wrap gap-4 items-center justify-between">
+        <div class="flex-1 min-w-[300px]">
+          <span class="p-input-icon-left w-full">
+            <i class="pi pi-search"></i>
+            <input 
+              pInputText 
+              type="text" 
+              [(ngModel)]="searchValue"
+              (input)="dt.filterGlobal($any($event.target).value, 'contains')" 
+              placeholder="Search users..." 
+              class="w-full"
+            />
+          </span>
+        </div>
+        <div class="flex gap-2">
+          <button 
+            pButton 
+            label="Export" 
+            icon="pi pi-download" 
+            class="p-button-outlined"
+          ></button>
+          <button 
+            pButton 
+            label="Clear" 
+            icon="pi pi-filter-slash" 
+            class="p-button-outlined"
+            (click)="clear(dt)"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PrimeNG DataTable -->
+    <p-table 
+      #dt
+      [value]="users" 
+      [rows]="10"
+      [paginator]="true"
+      [globalFilterFields]="['name', 'email', 'role', 'department']"
+      [rowsPerPageOptions]="[5, 10, 20]"
+      [loading]="loading"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} users"
+      [rowHover]="true"
+      dataKey="id"
+      [(selection)]="selectedUsers"
+      class="bg-red"
+      styleClass="p-datatable-sm"
+    >
+      <!-- Selection Column -->
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 4rem">
+            <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+          </th>
+          <th pSortableColumn="name">
+            User <p-sortIcon field="name"></p-sortIcon>
+          </th>
+          <th pSortableColumn="role">
+            Role <p-sortIcon field="role"></p-sortIcon>
+          </th>
+          <th pSortableColumn="department">
+            Department <p-sortIcon field="department"></p-sortIcon>
+          </th>
+          <th pSortableColumn="status">
+            Status <p-sortIcon field="status"></p-sortIcon>
+          </th>
+          <th pSortableColumn="joinDate">
+            Join Date <p-sortIcon field="joinDate"></p-sortIcon>
+          </th>
+          <th pSortableColumn="lastLogin">
+            Last Login <p-sortIcon field="lastLogin"></p-sortIcon>
+          </th>
+          <th style="width: 12rem">Actions</th>
+        </tr>
+      </ng-template>
+
+      <!-- Table Body -->
+      <ng-template pTemplate="body" let-user>
+        <tr>
+          <td>
+            <p-tableCheckbox [value]="user"></p-tableCheckbox>
+          </td>
+          <td>
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                {{ user.avatar }}
+              </div>
+              <div class="min-w-0">
+                <p class="font-medium text-blue-gray-900 dark:text-blue-gray-100 truncate">{{ user.name }}</p>
+                <p class="text-sm text-blue-gray-500 dark:text-blue-gray-400 truncate">{{ user.email }}</p>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span [class]="getRoleBadgeClass(user.role)" class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full">
+              {{ user.role }}
+            </span>
+          </td>
+          <td>
+            <span class="text-sm text-blue-gray-900 dark:text-blue-gray-100">{{ user.department }}</span>
+          </td>
+          <td>
+            <p-tag 
+              [value]="user.status" 
+              [severity]="getStatusSeverity(user.status)"
+            ></p-tag>
+          </td>
+          <td>
+            <span class="text-sm text-blue-gray-500 dark:text-blue-gray-400">{{ user.joinDate }}</span>
+          </td>
+          <td>
+            <span class="text-sm text-blue-gray-500 dark:text-blue-gray-400">{{ user.lastLogin }}</span>
+          </td>
+          <td>
+            <div class="flex gap-2">
+              <button 
+                pButton 
+                icon="pi pi-eye" 
+                class="p-button-rounded p-button-text p-button-sm"
+                (click)="viewUser(user)"
+                pTooltip="View"
+                tooltipPosition="top"
+              ></button>
+              <button 
+                pButton 
+                icon="pi pi-pencil" 
+                class="p-button-rounded p-button-text p-button-sm"
+                (click)="editUser(user)"
+                pTooltip="Edit"
+                tooltipPosition="top"
+              ></button>
+              <button 
+                pButton 
+                icon="pi pi-trash" 
+                class="p-button-rounded p-button-text p-button-danger p-button-sm"
+                (click)="deleteUser(user)"
+                pTooltip="Delete"
+                tooltipPosition="top"
+              ></button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <!-- Empty State -->
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="8" class="text-center py-8">
+            <div class="flex flex-col items-center justify-center">
+              <i class="pi pi-users text-4xl text-blue-gray-300 dark:text-blue-gray-600 mb-3"></i>
+              <p class="text-blue-gray-500 dark:text-blue-gray-400">No users found</p>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <!-- Loading State -->
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td colspan="8">
+            <div class="flex items-center justify-center py-8">
+              <i class="pi pi-spin pi-spinner text-2xl text-purple-500"></i>
+              <span class="ml-3 text-blue-gray-500 dark:text-blue-gray-400">Loading users...</span>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <!-- Selection Info -->
+  <div *ngIf="selectedUsers.length > 0" class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <i class="pi pi-check-circle text-purple-600 dark:text-purple-400"></i>
+        <span class="text-sm font-medium text-purple-900 dark:text-purple-300">
+          {{ selectedUsers.length }} user(s) selected
+        </span>
+      </div>
+      <div class="flex gap-2">
+        <button class="px-3 py-1.5 text-sm font-medium text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/50 rounded-lg transition-colors">
+          Bulk Edit
+        </button>
+        <button class="px-3 py-1.5 text-sm font-medium text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-lg transition-colors">
+          Bulk Delete
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
