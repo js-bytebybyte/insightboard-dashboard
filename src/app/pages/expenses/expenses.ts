@@ -1,4 +1,6 @@
 import { Component } from '@angular/core';
+import { TableModule } from 'primeng/table';
+
 
 @Component({
   selector: 'app-expenses',

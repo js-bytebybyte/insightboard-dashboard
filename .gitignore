@@ -1,3 +1,7 @@
+# private files
+/bank
+/src/app/data/
+
 # Angular specific
 /dist/
 /out-tsc/

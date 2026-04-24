@@ -1,10 +1,16 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgApexchartsModule } from 'ng-apexcharts';
 
 // primeng module imports
 import { CardModule } from 'primeng/card';
 
+// Services
+import { CsvParserService } from '../../services/csv-parser.service';
+
+// Data 
+import { transactions } from '../../data/mock'
+import type { Transaction } from '../../models/transactions';
 
 import {
   ApexAxisChartSeries,
@@ -24,14 +30,9 @@ interface KPI {
   description: string;
 }
 
-interface Transaction {
-  id: string;
-  customer: string;
-  customerInitials: string;
-  email: string;
-  date: string;
-  amount: string;
-  status: 'Completed' | 'Pending' | 'Failed';
+interface CategoryTotals {
+  category: string;
+  total: number;
 }
 
 @Component({
@@ -41,6 +42,7 @@ interface Transaction {
   styleUrl: './dashboard.scss',
 })
 export class Dashboard {
+  private csvParserService = inject(CsvParserService);
   // KPI Data
   kpis = {
     revenue: {
@@ -129,6 +131,45 @@ export class Dashboard {
     }
   };
 
+
+
+  // I need a total amount per category within transactions
+
+  /* 
+    issue: transactions contains multiple times the same category
+    so i would like to create a structure that will retrieve the unique categories (no duplicates)
+    and each time the category is found in transaction it will sum the amounts 
+    result is an object array with properties
+      - category:
+      - total 
+  */
+  categories = transactions.map( t => t.category);
+
+  getTotalPerCategory(): CategoryTotals[] {
+    const totals: { [key: string]: number } = {};
+
+    // Loop through each transaction
+    for (const transaction of transactions) {
+      // If category already exists, add to total; otherwise, set initial total
+      if (totals[transaction.category]) {
+        totals[transaction.category] += transaction.amount;
+      } else {
+        totals[transaction.category] = transaction.amount;
+      }
+    }
+    console.log(totals);
+
+    // Create the result array
+    const result: CategoryTotals[] = [];
+    for (const category in totals) {
+      result.push({ category, total: totals[category] });
+    }
+    return result;
+  }
+  
+  
+
+
   // Category Chart Configuration
   categoryChartOptions: {
     series: ApexAxisChartSeries;
@@ -141,8 +182,8 @@ export class Dashboard {
   } = {
     series: [
       {
-        name: 'Sales',
-        data: [44, 55, 41, 67, 22, 43, 21]
+        name: 'Totals',
+        data: this.getTotalPerCategory().map((c) => c.total)
       }
     ],
     chart: {
@@ -160,11 +201,11 @@ export class Dashboard {
       }
     },
     dataLabels: {
-      enabled: false
+      enabled: true
     },
     colors: ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4', '#6366f1'],
     xaxis: {
-      categories: ['Electronics', 'Fashion', 'Home', 'Sports', 'Books', 'Toys', 'Food'],
+      categories: this.getTotalPerCategory().map((c) => c.category),
       labels: {
         style: {
           colors: '#64748b'
@@ -177,54 +218,7 @@ export class Dashboard {
     }
   };
 
-  // Transactions Data
-  transactions: Transaction[] = [
-    {
-      id: '#TXN-2301',
-      customer: 'Sarah Johnson',
-      customerInitials: 'SJ',
-      email: 'sarah.j@example.com',
-      date: 'Nov 23, 2025',
-      amount: '$458.00',
-      status: 'Completed'
-    },
-    {
-      id: '#TXN-2302',
-      customer: 'Michael Chen',
-      customerInitials: 'MC',
-      email: 'michael.c@example.com',
-      date: 'Nov 23, 2025',
-      amount: '$892.50',
-      status: 'Completed'
-    },
-    {
-      id: '#TXN-2303',
-      customer: 'Emma Wilson',
-      customerInitials: 'EW',
-      email: 'emma.w@example.com',
-      date: 'Nov 22, 2025',
-      amount: '$125.00',
-      status: 'Pending'
-    },
-    {
-      id: '#TXN-2304',
-      customer: 'James Martinez',
-      customerInitials: 'JM',
-      email: 'james.m@example.com',
-      date: 'Nov 22, 2025',
-      amount: '$649.99',
-      status: 'Completed'
-    },
-    {
-      id: '#TXN-2305',
-      customer: 'Olivia Brown',
-      customerInitials: 'OB',
-      email: 'olivia.b@example.com',
-      date: 'Nov 21, 2025',
-      amount: '$234.00',
-      status: 'Failed'
-    }
-  ];
+  
 
   // Helper method for status badge styling
   getStatusClass(status: string): string {
@@ -234,5 +228,122 @@ export class Dashboard {
       'Failed': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
     };
     return classes[status] || '';
+  }
+
+  // Helper method to display total Amount of Recurring Expenses
+  getRecurringExpensesAmount(): any {
+    const totalAmount = transactions.reduce((prev, t) => prev + t.amount, 0);
+    return totalAmount.toFixed(2);
+  }
+
+  /**
+   * Handle CSV file upload from input
+   * @param event - File input change event
+   */
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if (!file) {
+      console.log('No file selected');
+      return;
+    }
+
+    // Validate file type
+    if (!file.name.endsWith('.csv')) {
+      alert('Please select a valid CSV file');
+      return;
+    }
+
+    // Read file as text
+    const reader = new FileReader();
+    reader.onload = (e: ProgressEvent<FileReader>) => {
+      if (typeof e.target?.result === 'string') {
+        this.parseAndMergeTransactions(e.target.result);
+      }
+    };
+    reader.onerror = () => {
+      console.error('Error reading file');
+      alert('Error reading the file. Please try again.');
+    };
+
+    reader.readAsText(file);
+  }
+
+  /**
+   * Parse CSV content and merge with existing transactions
+   * @param csvContent - Raw CSV file content
+   */
+  private parseAndMergeTransactions(csvContent: string): void {
+    try {
+      // Parse CSV using the service
+      const parsedTransactions = this.csvParserService.parseKbcCsv(csvContent);
+      console.log('parseAndMergeTransactions', parsedTransactions);
+
+      if (parsedTransactions.length === 0) {
+        alert('No valid transactions found in the CSV file');
+        return;
+      }
+
+      // Merge with existing transactions (avoid duplicates)
+      const mergedTransactions = this.mergeDuplicates(
+        [...transactions, ...parsedTransactions]
+      );
+
+      // Update transactions
+      transactions = mergedTransactions;
+
+      // Log success
+      console.log(`Successfully loaded ${parsedTransactions.length} transactions`);
+      alert(`Successfully loaded ${parsedTransactions.length} transactions!`);
+
+      // Refresh charts by triggering change detection
+      this.updateCharts();
+    } catch (error) {
+      console.error('Error parsing CSV:', error);
+      alert('Error parsing the CSV file. Please check the file format.');
+    }
+  }
+
+  /**
+   * Merge duplicate transactions based on date, amount, and recipient
+   * @param transactions - Array of transactions to merge
+   * @returns Array without duplicates
+   */
+  private mergeDuplicates(transactions: Transaction[]): Transaction[] {
+    const seen = new Set<string>();
+    const merged: Transaction[] = [];
+
+    for (const transaction of transactions) {
+      // Create a unique key based on date, amount, and recipient
+      const key = `${transaction.date}-${transaction.amount}-${transaction.recipient}`;
+
+      if (!seen.has(key)) {
+        seen.add(key);
+        merged.push(transaction);
+      }
+    }
+
+    return merged;
+  }
+
+  /**
+   * Update chart data (this will refresh the charts)
+   */
+  private updateCharts(): void {
+    // Update category chart with new data
+    this.categoryChartOptions = {
+      ...this.categoryChartOptions,
+      series: [
+        {
+          name: 'Totals',
+          data: this.getTotalPerCategory().map((c) => c.total)
+        }
+      ],
+      xaxis: {
+        ...this.categoryChartOptions.xaxis,
+        categories: this.getTotalPerCategory().map((c) => c.category)
+      }
+    };
   }
 }
