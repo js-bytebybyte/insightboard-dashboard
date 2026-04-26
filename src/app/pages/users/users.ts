@@ -63,7 +63,7 @@ export class Users implements OnInit {
     }, 1000);
   }
 
-  getMockUsers(): User[] {
+    getMockUsers(): User[] {
     return [
       {
         id: 1,

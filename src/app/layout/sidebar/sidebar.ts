@@ -12,7 +12,8 @@ export class Sidebar {
   // Track which sections are expanded
   expandedSections: { [key: string]: boolean } = {
     dashboard: true,  // Start with dashboard expanded
-    users: false
+    users: false,
+    expenses: false,
   };
 
   // Toggle section expansion

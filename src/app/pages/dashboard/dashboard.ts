@@ -9,8 +9,8 @@ import { CardModule } from 'primeng/card';
 import { CsvParserService } from '../../services/csv-parser.service';
 
 // Data 
-import { transactions } from '../../data/mock'
-import type { Transaction } from '../../models/transactions';
+import { TransactionService } from '../../service/mock'
+import  { Transaction } from '../../domain/transactions';
 
 import {
   ApexAxisChartSeries,
@@ -39,10 +39,13 @@ interface CategoryTotals {
   selector: 'app-dashboard',
   imports: [CommonModule, NgApexchartsModule],
   templateUrl: './dashboard.html',
-  styleUrl: './dashboard.scss',
+  styleUrl: './dashboard.scss'
 })
 export class Dashboard {
   private csvParserService = inject(CsvParserService);
+  private transactionService = inject(TransactionService);
+  transactions: Transaction[] = this.transactionService.transaction;
+
   // KPI Data
   kpis = {
     revenue: {
@@ -133,8 +136,6 @@ export class Dashboard {
 
 
 
-  // I need a total amount per category within transactions
-
   /* 
     issue: transactions contains multiple times the same category
     so i would like to create a structure that will retrieve the unique categories (no duplicates)
@@ -143,13 +144,13 @@ export class Dashboard {
       - category:
       - total 
   */
-  categories = transactions.map( t => t.category);
+  categories = this.transactions.map( t => t.category);
 
   getTotalPerCategory(): CategoryTotals[] {
     const totals: { [key: string]: number } = {};
 
     // Loop through each transaction
-    for (const transaction of transactions) {
+    for (const transaction of this.transactions) {
       // If category already exists, add to total; otherwise, set initial total
       if (totals[transaction.category]) {
         totals[transaction.category] += transaction.amount;
@@ -157,7 +158,7 @@ export class Dashboard {
         totals[transaction.category] = transaction.amount;
       }
     }
-    console.log(totals);
+    console.log('totals per category:' ,totals);
 
     // Create the result array
     const result: CategoryTotals[] = [];
@@ -166,7 +167,6 @@ export class Dashboard {
     }
     return result;
   }
-  
   
 
 
@@ -232,7 +232,7 @@ export class Dashboard {
 
   // Helper method to display total Amount of Recurring Expenses
   getRecurringExpensesAmount(): any {
-    const totalAmount = transactions.reduce((prev, t) => prev + t.amount, 0);
+    const totalAmount = this.transactions.reduce((prev, t) => prev + t.amount, 0);
     return totalAmount.toFixed(2);
   }
 
@@ -287,11 +287,11 @@ export class Dashboard {
 
       // Merge with existing transactions (avoid duplicates)
       const mergedTransactions = this.mergeDuplicates(
-        [...transactions, ...parsedTransactions]
+        [...this.transactions, ...parsedTransactions]
       );
 
       // Update transactions
-      transactions = mergedTransactions;
+      this.transactions = mergedTransactions;
 
       // Log success
       console.log(`Successfully loaded ${parsedTransactions.length} transactions`);
