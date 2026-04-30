@@ -338,7 +338,7 @@ export class Dashboard {
         {
           name: 'Totals',
           data: this.getTotalPerCategory().map((c) => c.total)
-        }
+        } 
       ],
       xaxis: {
         ...this.categoryChartOptions.xaxis,

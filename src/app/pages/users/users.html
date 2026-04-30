@@ -1,6 +1,6 @@
 <div class="space-y-6">
   <!-- Page Header -->
-  <div class="flex items-center justify-between">
+  <div class="flex items-center justify-between mt-10">
     <div>
       <h1 class="text-3xl font-bold text-blue-gray-900 dark:text-white">Users</h1>
       <p class="text-sm text-blue-gray-500 dark:text-blue-gray-400 mt-1">Manage your team members and their roles</p>
@@ -16,8 +16,8 @@
     
     <!-- Table Toolbar -->
     <div class="p-6 border-b border-blue-gray-100 dark:border-blue-gray-700">
-      <div class="flex flex-wrap gap-4 items-center justify-between">
-        <div class="flex-1 min-w-[300px]">
+      <div class="flex gap-4 items-center justify-between align-content">
+        <div class="flex-auto min-w-[300px]">
           <span class="p-input-icon-left w-full">
             <i class="pi pi-search"></i>
             <input 
@@ -26,7 +26,10 @@
               [(ngModel)]="searchValue"
               (input)="dt.filterGlobal($any($event.target).value, 'contains')" 
               placeholder="Search users..." 
-              class="w-full"
+              class="w-full pl-10 pr-4 py-2 text-sm border border-blue-gray-200 dark:border-blue-gray-600 
+              rounded-lg bg-white dark:bg-blue-gray-700 text-blue-gray-900 dark:text-blue-gray-100 placeholder-blue-gray-400 
+              dark:placeholder-blue-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-gray-300 dark:focus:ring-blue-gray-500 
+              focus:border-transparent transition-all"
             />
           </span>
         </div>
@@ -184,6 +187,13 @@
           </td>
         </tr>
       </ng-template>
+
+       <!-- Paginator -->
+      <ng-template #paginatorcenter>
+        <div class="bg-blue">
+          <p-button type="button" icon="pi pi-plus" text />
+        </div>
+      </ng-template>
     </p-table>
   </div>
 
@@ -206,4 +216,6 @@
       </div>
     </div>
   </div>
+
+ 
 </div>
