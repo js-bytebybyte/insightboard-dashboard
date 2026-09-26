@@ -1,14 +1,5 @@
 import { Injectable } from '@angular/core';
-
-interface Transaction {
-  id: string;
-  recipient: string;
-  category: string;
-  notes: string;
-  date: string;
-  amount: number;
-  status: 'Completed' | 'Pending' | 'Failed';
-}
+import type { Transaction } from '../models/transactions';
 
 @Injectable({
   providedIn: 'root'

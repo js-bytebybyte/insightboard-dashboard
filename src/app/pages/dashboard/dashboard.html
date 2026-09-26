@@ -160,13 +160,13 @@
       </div>
       <div id="category-chart">
         <apx-chart
-          [series]="categoryChartOptions.series"
-          [chart]="categoryChartOptions.chart"
-          [xaxis]="categoryChartOptions.xaxis"
-          [plotOptions]="categoryChartOptions.plotOptions"
-          [colors]="categoryChartOptions.colors"
-          [dataLabels]="categoryChartOptions.dataLabels"
-          [grid]="categoryChartOptions.grid"
+          [series]="categoryChartOptions().series"
+          [chart]="categoryChartOptions().chart"
+          [xaxis]="categoryChartOptions().xaxis"
+          [plotOptions]="categoryChartOptions().plotOptions"
+          [colors]="categoryChartOptions().colors"
+          [dataLabels]="categoryChartOptions().dataLabels"
+          [grid]="categoryChartOptions().grid"
         ></apx-chart>
       </div>
     </div>
@@ -199,7 +199,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-blue-gray-100 dark:divide-blue-gray-700">
-          <tr *ngFor="let transaction of transactions" class="hover:bg-blue-gray-50 dark:hover:bg-blue-gray-700/50 transition-colors">
+          <tr *ngFor="let transaction of transactions()" class="hover:bg-blue-gray-50 dark:hover:bg-blue-gray-700/50 transition-colors">
             <td class="px-6 py-4 whitespace-nowrap">
               <span class="text-sm font-medium text-blue-gray-900 dark:text-blue-gray-100">{{ transaction.id }}</span>
             </td>
