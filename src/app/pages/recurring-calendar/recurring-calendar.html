@@ -1,0 +1,142 @@
+<div class="space-y-6">
+  <!-- Page Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-3xl font-bold text-blue-gray-900 dark:text-white">Recurring Expense Calendar</h1>
+      <p class="text-sm text-blue-gray-500 dark:text-blue-gray-400 mt-1">
+        Payments that repeat monthly, quarterly or yearly, projected onto the calendar.
+      </p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-4 gap-6">
+    <!-- Calendar -->
+    <div class="xl:col-span-3 bg-white dark:bg-blue-gray-800 rounded-xl shadow-sm border border-blue-gray-100 dark:border-blue-gray-700 p-6">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-lg font-semibold text-blue-gray-900 dark:text-white">
+          {{ visibleMonth() | date: 'MMMM yyyy' }}
+        </h2>
+        <div class="flex gap-2">
+          <button type="button" (click)="previousMonth()" aria-label="Previous month"
+            class="px-3 py-2 text-sm font-medium text-blue-gray-700 dark:text-blue-gray-300 bg-white dark:bg-blue-gray-800 border border-blue-gray-200 dark:border-blue-gray-700 rounded-lg hover:bg-blue-gray-50 dark:hover:bg-blue-gray-700 transition-colors">
+            <i class="pi pi-chevron-left"></i>
+          </button>
+          <button type="button" (click)="goToToday()"
+            class="px-4 py-2 text-sm font-medium text-blue-gray-700 dark:text-blue-gray-300 bg-white dark:bg-blue-gray-800 border border-blue-gray-200 dark:border-blue-gray-700 rounded-lg hover:bg-blue-gray-50 dark:hover:bg-blue-gray-700 transition-colors">
+            Today
+          </button>
+          <button type="button" (click)="nextMonth()" aria-label="Next month"
+            class="px-3 py-2 text-sm font-medium text-blue-gray-700 dark:text-blue-gray-300 bg-white dark:bg-blue-gray-800 border border-blue-gray-200 dark:border-blue-gray-700 rounded-lg hover:bg-blue-gray-50 dark:hover:bg-blue-gray-700 transition-colors">
+            <i class="pi pi-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-7 gap-px bg-blue-gray-100 dark:bg-blue-gray-700 border border-blue-gray-100 dark:border-blue-gray-700 rounded-lg overflow-hidden">
+        @for (weekday of weekdays; track weekday) {
+          <div class="bg-blue-gray-50 dark:bg-blue-gray-900/50 px-2 py-2 text-center text-xs font-medium text-blue-gray-500 dark:text-blue-gray-400 uppercase tracking-wider">
+            {{ weekday }}
+          </div>
+        }
+
+        @for (day of calendarDays(); track day.date.getTime()) {
+          <div [class]="dayCellClass(day)" class="min-h-28 p-2 flex flex-col gap-1">
+            <span [class]="dayNumberClass(day)"
+              class="text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full">
+              {{ day.date.getDate() }}
+            </span>
+
+            @for (payment of day.payments; track payment.expense.recipient) {
+              <div [class]="categoryClass(payment.expense.category)"
+                class="rounded-md px-2 py-1 text-xs leading-tight"
+                [title]="payment.expense.recipient + ' · ' + payment.expense.category + ' · ' + payment.expense.frequency">
+                <p class="font-semibold truncate">{{ payment.expense.recipient }}</p>
+                <p>{{ payment.expense.amount | currency: 'EUR' }}</p>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Month summary -->
+    <div class="bg-white dark:bg-blue-gray-800 rounded-xl shadow-sm border border-blue-gray-100 dark:border-blue-gray-700 p-6 flex flex-col">
+      <h3 class="text-sm font-medium text-blue-gray-500 dark:text-blue-gray-400 mb-1">Expected this month</h3>
+      <p class="text-2xl font-bold text-blue-gray-900 dark:text-white">{{ monthTotal() | currency: 'EUR' }}</p>
+      <p class="text-xs text-blue-gray-400 dark:text-blue-gray-500 mt-2">
+        {{ paymentsThisMonth().length }} recurring payment(s) in {{ visibleMonth() | date: 'MMMM' }}
+      </p>
+
+      <hr class="my-4 border-blue-gray-100 dark:border-blue-gray-700" />
+
+      @if (paymentsThisMonth().length) {
+        <ul class="space-y-3">
+          @for (payment of paymentsThisMonth(); track payment.expense.recipient) {
+            <li class="flex items-center justify-between gap-3">
+              <div class="min-w-0">
+                <p class="text-sm font-medium text-blue-gray-900 dark:text-blue-gray-100 truncate">
+                  {{ payment.expense.recipient }}
+                </p>
+                <p class="text-xs text-blue-gray-500 dark:text-blue-gray-400">
+                  {{ payment.date | date: 'EEE d MMM' }} · {{ payment.expense.frequency | titlecase }}
+                </p>
+              </div>
+              <span class="text-sm font-semibold text-blue-gray-900 dark:text-blue-gray-100 whitespace-nowrap">
+                {{ payment.expense.amount | currency: 'EUR' }}
+              </span>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="text-sm text-blue-gray-500 dark:text-blue-gray-400">No recurring payments expected this month.</p>
+      }
+    </div>
+  </div>
+
+  <!-- Detected recurring expenses -->
+  <div class="bg-white dark:bg-blue-gray-800 rounded-xl shadow-sm border border-blue-gray-100 dark:border-blue-gray-700 overflow-hidden">
+    <div class="p-6 border-b border-blue-gray-100 dark:border-blue-gray-700">
+      <h3 class="text-lg font-semibold text-blue-gray-900 dark:text-white">Detected recurring expenses</h3>
+      <p class="text-sm text-blue-gray-500 dark:text-blue-gray-400 mt-1">
+        A recipient counts as recurring when it was paid at least twice at a regular interval.
+      </p>
+    </div>
+
+    @if (recurringExpenses().length) {
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-blue-gray-50 dark:bg-blue-gray-900/50 border-b border-blue-gray-100 dark:border-blue-gray-700">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-blue-gray-500 dark:text-blue-gray-400 uppercase tracking-wider">Recipient</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-blue-gray-500 dark:text-blue-gray-400 uppercase tracking-wider">Category</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-blue-gray-500 dark:text-blue-gray-400 uppercase tracking-wider">Frequency</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-blue-gray-500 dark:text-blue-gray-400 uppercase tracking-wider">Day of month</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-blue-gray-500 dark:text-blue-gray-400 uppercase tracking-wider">Last paid</th>
+              <th class="px-6 py-3 text-right text-xs font-medium text-blue-gray-500 dark:text-blue-gray-400 uppercase tracking-wider">Avg. amount</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-blue-gray-100 dark:divide-blue-gray-700">
+            @for (expense of recurringExpenses(); track expense.recipient) {
+              <tr class="hover:bg-blue-gray-50 dark:hover:bg-blue-gray-700/50 transition-colors">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-gray-900 dark:text-blue-gray-100">{{ expense.recipient }}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span [class]="categoryClass(expense.category)" class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full">
+                    {{ expense.category }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-gray-500 dark:text-blue-gray-400">{{ expense.frequency | titlecase }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-gray-500 dark:text-blue-gray-400">{{ expense.dayOfMonth }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-gray-500 dark:text-blue-gray-400">{{ expense.lastPaymentDate | date: 'dd/MM/yyyy' }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-blue-gray-900 dark:text-blue-gray-100 text-right">{{ expense.amount | currency: 'EUR' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <p class="p-6 text-sm text-blue-gray-500 dark:text-blue-gray-400">
+        No recurring expenses found yet. Upload a bank CSV on the dashboard to detect them.
+      </p>
+    }
+  </div>
+</div>

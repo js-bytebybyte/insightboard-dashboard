@@ -7,10 +7,7 @@ import { CardModule } from 'primeng/card';
 
 // Services
 import { CsvParserService } from '../../services/csv-parser.service';
-
-// Data 
-import { transactions } from '../../data/mock'
-import type { Transaction } from '../../models/transactions';
+import { TransactionsService } from '../../services/transactions.service';
 
 import {
   ApexAxisChartSeries,
@@ -43,6 +40,12 @@ interface CategoryTotals {
 })
 export class Dashboard {
   private csvParserService = inject(CsvParserService);
+  private transactionsService = inject(TransactionsService);
+
+  // Shared with other pages (e.g. the recurring expense calendar)
+  get transactions() {
+    return this.transactionsService.transactions();
+  }
   // KPI Data
   kpis = {
     revenue: {
@@ -143,13 +146,13 @@ export class Dashboard {
       - category:
       - total 
   */
-  categories = transactions.map( t => t.category);
+  categories = this.transactions.map( t => t.category);
 
   getTotalPerCategory(): CategoryTotals[] {
     const totals: { [key: string]: number } = {};
 
     // Loop through each transaction
-    for (const transaction of transactions) {
+    for (const transaction of this.transactions) {
       // If category already exists, add to total; otherwise, set initial total
       if (totals[transaction.category]) {
         totals[transaction.category] += transaction.amount;
@@ -232,7 +235,7 @@ export class Dashboard {
 
   // Helper method to display total Amount of Recurring Expenses
   getRecurringExpensesAmount(): any {
-    const totalAmount = transactions.reduce((prev, t) => prev + t.amount, 0);
+    const totalAmount = this.transactions.reduce((prev, t) => prev + t.amount, 0);
     return totalAmount.toFixed(2);
   }
 
@@ -285,13 +288,8 @@ export class Dashboard {
         return;
       }
 
-      // Merge with existing transactions (avoid duplicates)
-      const mergedTransactions = this.mergeDuplicates(
-        [...transactions, ...parsedTransactions]
-      );
-
-      // Update transactions
-      transactions = mergedTransactions;
+      // Merge with existing transactions (the service skips duplicates)
+      this.transactionsService.addTransactions(parsedTransactions);
 
       // Log success
       console.log(`Successfully loaded ${parsedTransactions.length} transactions`);
@@ -303,28 +301,6 @@ export class Dashboard {
       console.error('Error parsing CSV:', error);
       alert('Error parsing the CSV file. Please check the file format.');
     }
-  }
-
-  /**
-   * Merge duplicate transactions based on date, amount, and recipient
-   * @param transactions - Array of transactions to merge
-   * @returns Array without duplicates
-   */
-  private mergeDuplicates(transactions: Transaction[]): Transaction[] {
-    const seen = new Set<string>();
-    const merged: Transaction[] = [];
-
-    for (const transaction of transactions) {
-      // Create a unique key based on date, amount, and recipient
-      const key = `${transaction.date}-${transaction.amount}-${transaction.recipient}`;
-
-      if (!seen.has(key)) {
-        seen.add(key);
-        merged.push(transaction);
-      }
-    }
-
-    return merged;
   }
 
   /**
